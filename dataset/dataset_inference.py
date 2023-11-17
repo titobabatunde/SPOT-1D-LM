@@ -51,7 +51,9 @@ class Proteins_Dataset(Dataset):
         one_hot_enc = one_hot(seq)
         embedding1 = np.load(os.path.join("inputs/", protein + "_esm.npy"))
         embedding2 = np.load(os.path.join("inputs/", protein + "_pt.npy"))
+        # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
 
+        # features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
         features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
 
         protein_len = len(seq)

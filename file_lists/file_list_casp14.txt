@@ -1,0 +1,15 @@
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1027-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1029-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1031-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1033-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1035-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1037-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1038-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1038-D2.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1039-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1040-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1041-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1042-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1043-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1046s1-D1.fasta
+/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/spot_1d_lm/fasta/T1049-D1.fasta

@@ -5,7 +5,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
-from transformers import T5EncoderModel, T5Tokenizer
+from transformers import BertModel, BertTokenizer
 from dataset.data_functions import read_list, read_fasta_file
 
 parser = argparse.ArgumentParser()
@@ -13,9 +13,9 @@ parser.add_argument('--file_list', default='', type=str, help='file list path ')
 parser.add_argument('--device', default='cpu', type=str,help=' define the device you want the ')
 args = parser.parse_args()
 
-# loads tokenizer and model for prot_t5_xl_uniref50
-tokenizer = T5Tokenizer.from_pretrained("Rostlab/prot_t5_xl_uniref50", do_lower_case=False)
-model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_uniref50")
+# loads tokenizer and model for prot_bert
+tokenizer = BertTokenizer.from_pretrained("Rostlab/prot_bert", do_lower_case=False)
+model = BertModel.from_pretrained("Rostlab/prot_bert")
 
 # setting up the device for Pytorch
 device = torch.device(args.device)
@@ -67,5 +67,5 @@ for prot_path in tqdm(prot_list):
         features.append(seq_emd)
 
     # save embeddings to a numpy file
-    np.save("inputs/" + prot_name + "_pt.npy", features[0])
-print(" ProtTrans embeddings generation completed ... ")
+    np.save("inputs/" + prot_name + "_pb.npy", features[0])
+print(" ProtBert embeddings generation completed ... ")
