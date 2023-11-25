@@ -7,8 +7,14 @@ import numpy as np
 from tqdm import tqdm
 from transformers import T5EncoderModel, T5Tokenizer
 from dataset.data_functions import read_list, read_fasta_file
+"""
+used to generate embeddings for protein sequences using the ProtTrans model
+"""
+
 
 parser = argparse.ArgumentParser()
+# --file_list: Path to a fasta file containing a list of protein sequence files.
+# --device: The computing device (e.g., 'cpu' or 'cuda') for running the model.
 parser.add_argument('--file_list', default='', type=str, help='file list path ')
 parser.add_argument('--device', default='cpu', type=str,help=' define the device you want the ')
 args = parser.parse_args()
