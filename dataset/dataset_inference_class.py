@@ -4,8 +4,9 @@ import torch.nn as nn
 import numpy as np
 from torch.utils.data import Dataset
 # imports Dataset class from PyTorch for creating custom data loaders
-from dataset.data_functions import one_hot, read_list, read_fasta_file
+from dataset.data_functions import one_hot, read_list, read_fasta_file, normalize_asa, normalize_circular_angles, normalize_hsed, normalize_hseu
 # custom functions for data processing
+# ['AA NAME', 'CHAIN ID', 'RES NUM', 'AA CODE', 'SS3', 'ASA', 'HSE TOTAL', 'HSE UP', 'HSE DOWN', 'PHI', 'PSI', 'THETA', 'TAU', 'OMEGA']
 
 # def one_hot(seq):
 #     RNN_seq = seq
@@ -37,13 +38,14 @@ from dataset.data_functions import one_hot, read_list, read_fasta_file
 #         AA = ''.join(f.read().splitlines()[1:])
 #     return AA
 #
+SS3_CLASSES = ['C', 'E', 'H']  # Define your SS3 classes
 
 class Proteins_Dataset(Dataset):
-    def __init__(self, list):
+    def __init__(self, file_name_list):
         # list is the file path to a list of protein sequences
         # these file path to a list of protein sequences are read
         # protein_list is a list of file paths to fasta per protein
-        self.protein_list = read_list(list)
+        self.protein_list = read_list(file_name_list)
 
     def __len__(self):
         return len(self.protein_list)
@@ -63,6 +65,13 @@ class Proteins_Dataset(Dataset):
         embedding2 = np.load(os.path.join("inputs/", protein + "_pt.npy"))
         # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
 
+        # load label data for the protein
+        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"))
+
+        # normalize specific labels
+        ss3_indices = np.array([SS3_CLASSES.index(aa) if aa in SS3_CLASSES else -1 for aa in labels[:, 4]])
+
+
         # features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
         # concatenates the one-hot encoded sequence with the two embeddings
         features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
@@ -71,27 +80,32 @@ class Proteins_Dataset(Dataset):
 
         # returns a tuple of features, length of protein sequences, 
         # protein name, and protein sequence
-        return features, protein_len, protein, seq
+        return torch.FloatTensor(features), torch.LongTensor(ss3_indices), protein_len, protein, seq
 
 
 def text_collate_fn(data):
     """
     collate function for data read from text file
+    per batch
     """
 
     # sort data by protein length in descending order
     data.sort(key=lambda x: x[1], reverse=True)
     # unpacks the sorted data into features, protein_len, and sequence
-    features, protein_len, protein, seq = zip(*data)
-    # converts each feature into a PyTorch float tensor
-    features = [torch.FloatTensor(x) for x in features]
+    features, labels, protein_len, protein, seq = zip(*data)
 
-    # Pad feature tensots to ensure they have the same shape
+    # # converts each feature into a PyTorch float tensor
+    # features = [torch.FloatTensor(x) for x in features]
+    # # converts each label into PyTorch float tensor
+    # labels   = [torch.FloatTensor(x) for x in labels]
+
+    # Pad feature and label tensors to ensure they have the same shape
     padded_features = nn.utils.rnn.pad_sequence(features, batch_first=True, padding_value=0)
+    padded_labels = nn.utils.rnn.pad_sequence(labels, batch_first=True, padding_value=0)
 
-    # returns the padded featyres, protein lengths,
-    #  protein names, and sequences
-    return padded_features, protein_len, protein, seq
+    # returns the padded features, protein lengths,
+    # protein names, and sequences
+    return padded_features, padded_labels, protein_len, protein, seq
 
 
 """
