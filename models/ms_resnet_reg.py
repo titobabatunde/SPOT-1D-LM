@@ -133,7 +133,7 @@ class BasicBlock7x7(nn.Module):
 
 
 class Network(nn.Module):
-    def __init__(self, input_channel=2324, layers=[5, 5, 5, 1], num_classes=13):
+    def __init__(self, input_channel=2324, layers=[5, 5, 5, 1], num_classes=11):
         self.inplanes3 = 64
         self.inplanes5 = 64
         self.inplanes7 = 64

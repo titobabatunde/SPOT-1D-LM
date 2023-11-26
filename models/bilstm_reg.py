@@ -18,7 +18,7 @@ class Network(nn.Module):
         self.linear1 = nn.Linear(in_features=2 * self.hidden_dim, out_features=1000)
         self.linear2 = nn.Linear(in_features=1000, out_features=1000)
 
-        self.linear3 = nn.Linear(in_features=1000, out_features=13)
+        self.linear3 = nn.Linear(in_features=1000, out_features=11) # 13
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x, seq_lens):
