@@ -83,29 +83,35 @@ class Proteins_Dataset_Class(Dataset):
         return torch.FloatTensor(features), torch.LongTensor(ss3_indices), protein_len, protein, seq
     # end def
 
-    def text_collate_fn(data):
+    def text_collate_fn(batch):
         """
         collate function for data read from text file
         per batch
         """
 
         # sort data by protein length in descending order
-        data.sort(key=lambda x: x[1], reverse=True)
-        # unpacks the sorted data into features, protein_len, and sequence
-        features, labels, protein_len, protein, seq = zip(*data)
+        batch.sort(key=lambda x: x[1], reverse=True)
 
-        # # converts each feature into a PyTorch float tensor
-        # features = [torch.FloatTensor(x) for x in features]
-        # # converts each label into PyTorch float tensor
-        # labels   = [torch.FloatTensor(x) for x in labels]
+        batch_features, batch_labels, protein_lengths = [], [], []
+        protein_names, sequences = [], []
+
+        # unpacks the sorted data into features, protein_len, and sequence
+        # features, labels, protein_len, protein, seq = zip(*data)
+        for features, labels, protein_len, protein, seq in batch:
+            batch_features.append(features)
+            batch_labels.append(labels)
+            protein_lengths.append(protein_len)
+            protein_names.append(protein)
+            sequences.append(seq)
+        # end for
 
         # Pad feature and label tensors to ensure they have the same shape
-        padded_features = nn.utils.rnn.pad_sequence(features, batch_first=True, padding_value=0)
-        padded_labels = nn.utils.rnn.pad_sequence(labels, batch_first=True, padding_value=0)
+        padded_features = nn.utils.rnn.pad_sequence(batch_features, batch_first=True, padding_value=0)
+        padded_labels = nn.utils.rnn.pad_sequence(batch_labels, batch_first=True, padding_value=0)
 
         # returns the padded features, protein lengths,
         # protein names, and sequences
-        return padded_features, padded_labels, protein_len, protein, seq
+        return padded_features, padded_labels, torch.tensor(protein_lengths), protein_names, sequences
     # end def
 # end class
 
