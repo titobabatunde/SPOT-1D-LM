@@ -40,25 +40,6 @@ model4 = Network4()
 model5 = Network5()
 model6 = Network6()
 
-# class EnsembleClassNetwork(torch.nn.Module):
-#     def __init__(self):
-#         super(EnsembleClassNetwork, self).__init__()
-#         self.model1 = Network()
-#         self.model2 = Network2()
-#         self.model3 = Network3()
-
-#     def forward(self, x):
-#         # Assuming each model's forward method returns a tensor of the same shape
-#         output1 = self.model1(x)
-#         output2 = self.model2(x)
-#         output3 = self.model3(x)
-
-#         # Average the outputs
-#         ensemble_output = (output1 + output2 + output3) / 3
-#         return ensemble_output
-#     # end def
-# # end class
-
 model1.load_state_dict(torch.load("checkpoints/model1.pt", map_location=torch.device('cpu')))
 model2.load_state_dict(torch.load("checkpoints/model2.pt", map_location=torch.device('cpu')))
 model3.load_state_dict(torch.load("checkpoints/model3.pt",map_location=torch.device('cpu')))
