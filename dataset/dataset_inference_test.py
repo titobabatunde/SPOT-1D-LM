@@ -38,8 +38,9 @@ from dataset.data_functions import one_hot, read_list, read_fasta_file, normaliz
 #         AA = ''.join(f.read().splitlines()[1:])
 #     return AA
 #
+SS3_CLASSES = ['C', 'E', 'H']  # Define your SS3 classes
 
-class Proteins_Dataset_Reg(Dataset):
+class Proteins_Dataset_Test(Dataset):
     def __init__(self, file_name_list):
         # list is the file path to a list of protein sequences
         # these file path to a list of protein sequences are read
@@ -64,28 +65,6 @@ class Proteins_Dataset_Reg(Dataset):
         embedding2 = np.load(os.path.join("inputs/", protein + "_pt.npy"))
         # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
 
-        # load label data for the protein
-        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"))
-
-        # normalize specific labels
-        norm_labels = np.empty((labels.shape[0], 11))
-        # normalize specific properties
-        norm_labels[:,0] = normalize_asa(labels[:,5], labels[:,3]) # normalize ASA
-        norm_labels[:,1] = normalize_hseu(labels[:,7]) # normalize HSE U
-        norm_labels[:,2] = normalize_hseu(labels[:,8]) # normalize HSE D
-
-        # normalize dihedral angles
-        phi     = normalize_circular_angles(labels[:,9])
-        psi     = normalize_circular_angles(labels[:,10])
-        theta   = normalize_circular_angles(labels[:,11])
-        tau     = normalize_circular_angles(labels[:,12])
-
-        # add dihedral angles into nomalized labels
-        norm_labels[:, 3:5] = phi
-        norm_labels[:, 5:7] = psi
-        norm_labels[:, 7:9] = theta
-        norm_labels[:, 9:]  = tau
-
         # features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
         # concatenates the one-hot encoded sequence with the two embeddings
         features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
@@ -94,7 +73,7 @@ class Proteins_Dataset_Reg(Dataset):
 
         # returns a tuple of features, length of protein sequences, 
         # protein name, and protein sequence
-        return torch.FloatTensor(features), torch.FloatTensor(norm_labels), protein_len, protein, seq
+        return torch.FloatTensor(features), protein_len, protein, seq
     # end def
 
     def text_collate_fn(data):
@@ -106,7 +85,7 @@ class Proteins_Dataset_Reg(Dataset):
         # sort data by protein length in descending order
         data.sort(key=lambda x: x[1], reverse=True)
         # unpacks the sorted data into features, protein_len, and sequence
-        features, labels, protein_len, protein, seq = zip(*data)
+        features, protein_len, protein, seq = zip(*data)
 
         # # converts each feature into a PyTorch float tensor
         # features = [torch.FloatTensor(x) for x in features]
@@ -115,11 +94,10 @@ class Proteins_Dataset_Reg(Dataset):
 
         # Pad feature and label tensors to ensure they have the same shape
         padded_features = nn.utils.rnn.pad_sequence(features, batch_first=True, padding_value=0)
-        padded_labels = nn.utils.rnn.pad_sequence(labels, batch_first=True, padding_value=0)
 
         # returns the padded features, protein lengths,
         # protein names, and sequences
-        return padded_features, padded_labels, protein_len, protein, seq
+        return padded_features, protein_len, protein, seq
     # end def
 # end class
 

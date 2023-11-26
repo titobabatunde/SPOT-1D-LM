@@ -40,7 +40,7 @@ from dataset.data_functions import one_hot, read_list, read_fasta_file, normaliz
 #
 SS3_CLASSES = ['C', 'E', 'H']  # Define your SS3 classes
 
-class Proteins_Dataset(Dataset):
+class Proteins_Dataset_Class(Dataset):
     def __init__(self, file_name_list):
         # list is the file path to a list of protein sequences
         # these file path to a list of protein sequences are read
@@ -81,31 +81,33 @@ class Proteins_Dataset(Dataset):
         # returns a tuple of features, length of protein sequences, 
         # protein name, and protein sequence
         return torch.FloatTensor(features), torch.LongTensor(ss3_indices), protein_len, protein, seq
+    # end def
 
+    def text_collate_fn(data):
+        """
+        collate function for data read from text file
+        per batch
+        """
 
-def text_collate_fn(data):
-    """
-    collate function for data read from text file
-    per batch
-    """
+        # sort data by protein length in descending order
+        data.sort(key=lambda x: x[1], reverse=True)
+        # unpacks the sorted data into features, protein_len, and sequence
+        features, labels, protein_len, protein, seq = zip(*data)
 
-    # sort data by protein length in descending order
-    data.sort(key=lambda x: x[1], reverse=True)
-    # unpacks the sorted data into features, protein_len, and sequence
-    features, labels, protein_len, protein, seq = zip(*data)
+        # # converts each feature into a PyTorch float tensor
+        # features = [torch.FloatTensor(x) for x in features]
+        # # converts each label into PyTorch float tensor
+        # labels   = [torch.FloatTensor(x) for x in labels]
 
-    # # converts each feature into a PyTorch float tensor
-    # features = [torch.FloatTensor(x) for x in features]
-    # # converts each label into PyTorch float tensor
-    # labels   = [torch.FloatTensor(x) for x in labels]
+        # Pad feature and label tensors to ensure they have the same shape
+        padded_features = nn.utils.rnn.pad_sequence(features, batch_first=True, padding_value=0)
+        padded_labels = nn.utils.rnn.pad_sequence(labels, batch_first=True, padding_value=0)
 
-    # Pad feature and label tensors to ensure they have the same shape
-    padded_features = nn.utils.rnn.pad_sequence(features, batch_first=True, padding_value=0)
-    padded_labels = nn.utils.rnn.pad_sequence(labels, batch_first=True, padding_value=0)
-
-    # returns the padded features, protein lengths,
-    # protein names, and sequences
-    return padded_features, padded_labels, protein_len, protein, seq
+        # returns the padded features, protein lengths,
+        # protein names, and sequences
+        return padded_features, padded_labels, protein_len, protein, seq
+    # end def
+# end class
 
 
 """
