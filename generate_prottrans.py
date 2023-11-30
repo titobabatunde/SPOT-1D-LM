@@ -5,6 +5,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
+import os
 from transformers import T5EncoderModel, T5Tokenizer
 from dataset.data_functions import read_list, read_fasta_file
 """
@@ -37,9 +38,13 @@ prot_list = read_list(args.file_list)
 # iterate through each protein file path
 for prot_path in tqdm(prot_list):
     # read the protein sequence from the file
-    seq = read_fasta_file(prot_path)
+    # seq = read_fasta_file(prot_path)
+
     # extract the protein name from the file path
     prot_name = prot_path.split('/')[-1].split('.')[0]
+
+    labels = np.load(os.path.join("spot_1d_lm/labels", prot_name + ".npy"), allow_pickle=True)
+    seq = ''.join(labels[:, 3])
 
     # insert spaces between each character in the sequence
     seq_temp = seq.replace('', " ")
