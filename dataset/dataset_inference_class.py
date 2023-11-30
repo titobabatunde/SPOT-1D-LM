@@ -56,17 +56,22 @@ class Proteins_Dataset_Class(Dataset):
         # extracts the protein name from the protein path
         protein = prot_path.split('/')[-1].split('.')[0]
 
+        # load label data for the protein
+        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"), allow_pickle=True)
+
         # reads the protein sequence from prot_path
-        seq = read_fasta_file(prot_path)
+        # seq = read_fasta_file(prot_path)
+        seq = ''.join(labels[:, 3])
+        # print(seq)
         # applies one-hot encdoing to the sequence
         one_hot_enc = one_hot(seq)
+        # print(one_hot_enc.shape) # (307, 20)
         # loads EEM and ProtTrans embeddings from the numpy files
         embedding1 = np.load(os.path.join("inputs/", protein + "_esm.npy"))
         embedding2 = np.load(os.path.join("inputs/", protein + "_pt.npy"))
         # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
 
-        # load label data for the protein
-        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"))
+
 
         # normalize specific labels
         ss3_indices = np.array([SS3_CLASSES.index(aa) if aa in SS3_CLASSES else -1 for aa in labels[:, 4]])
