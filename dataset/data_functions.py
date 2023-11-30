@@ -17,7 +17,7 @@ def read_fasta_file(fname):
     :param fname: filename (string)
     :return: protein sequence  (string)
     """
-    with open(fname, 'r') as f:
+    with open(fname + '.fasta', 'r') as f:
         AA = ''.join(f.read().splitlines()[1:])
     return AA
 
