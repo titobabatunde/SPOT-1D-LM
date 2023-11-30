@@ -7,12 +7,12 @@ PADDING_VALUE=0
 
 
 class Network(nn.Module):
-    def __init__(self, hidden_dim=1024):
+    def __init__(self, hidden_dim=1024, input_size=2862):
         super(Network, self).__init__()
 
         self.hidden_dim = hidden_dim
 
-        self.lstm1 = nn.LSTM(input_size=2862, hidden_size=self.hidden_dim, num_layers=2, batch_first=True,
+        self.lstm1 = nn.LSTM(input_size=input_size, hidden_size=self.hidden_dim, num_layers=2, batch_first=True,
                              bidirectional=True, dropout=0.50)
         self.drop1 = nn.Dropout(p=0.5)
 
