@@ -6,6 +6,7 @@ import numpy as np
 import os
 import gc
 import time
+import sys
 from tqdm.notebook import tqdm as blue_tqdm
 import matplotlib.pyplot as plt
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
@@ -24,15 +25,32 @@ from models.ms_resnet import Network as Network2
 from models.ms_res_lstm import Network as Network3
 SS3_CLASSES = ['C', 'E', 'H']  # Define your SS3 classes
 
+# path = "/mnt/nvme/home/bbabatun/IDL/PROJECT/SPOT-1D-LM/" # Add path to handout.
+# sys.path.append(path) 
+# os.chdir(path)
+# %cd {path}
+
 # cross Entropy loss here
+# config = dict(
+#     file_list_train = os.path.join(os.getcwd(), "spot_1d_lm/lists/train.txt"),
+#     file_list_val   = os.path.join(os.getcwd(), "spot_1d_lm/lists/val.txt"),
+#     file_list_test  = os.path.join(os.getcwd(), "spot_1d_lm/lists/casp12.txt") ,
+#     batch_size      = 10,
+#     epoch           = 100,
+#     loss            = torch.nn.CrossEntropyLoss(),
+#     device          = "cuda:3",
+#     learning_rate   = 2e-4,
+#     run             = 1
+# )
+
 config = dict(
-    file_list_train = "spot_1d_lm/list/train.txt",
-    file_list_val   = "spot_1d_lm/list/val.txt",
-    file_list_test  = "spot_1d_lm/list/casp12.txt",
+    file_list_train = "spot_1d_lm/lists/train.txt",
+    file_list_val   = "spot_1d_lm/lists/val.txt",
+    file_list_test  = "spot_1d_lm/lists/casp12.txt",
     batch_size      = 10,
     epoch           = 100,
     loss            = torch.nn.CrossEntropyLoss(),
-    device          = "cuda",
+    device          = "cuda:3",
     learning_rate   = 2e-4,
     run             = 1
 )
@@ -76,7 +94,7 @@ test_loader     = DataLoader(
     collate_fn  = test_dataset.text_collate_fn
 )
 
-print("No. of train mfccs   : ", train_dataset.__len__())
+print("No. of train proteins   : ", train_dataset.__len__())
 print("Batch size           : ", config['batch_size'])
 print("Train batches        : ", train_loader.__len__())
 print("Valid batches        : ", valid_loader.__len__())
@@ -131,9 +149,9 @@ def load_model(best_path, epoch_path, model, mode= 'best', metric= 'valid_acc', 
 torch.cuda.empty_cache()
 gc.collect()
 
-model1 = Network()
-model2 = Network2()
-model3 = Network3()
+model1 = Network(input_size=2324)
+model2 = Network2(input_channel=2324)
+model3 = Network3(input_channel=2324)
 
 class EnsembleNetwork(torch.nn.Module):
     def __init__(self, model1, model2, model3):
@@ -269,6 +287,8 @@ def validate(model, dataloader):
     total_loss = float(total_loss / len(dataloader))
     return acc, total_loss
 # end def
+
+wandb.login(key="3e9397f29d471b6beecce85c11b0ffc7a75c8296") #API Key is in your wandb account, under settings (wandb.ai/settings)
 
 run = wandb.init(
     name = "project-submission", ## Wandb creates random run names if you skip this field
