@@ -103,13 +103,13 @@ print("Test batches         : ", test_loader.__len__())
 print("\nChecking the shapes of the data...")
 for batch in train_loader:
     x, y, len, protein_name, sequence = batch
-    print(x.shape, y.shape, len.shape, protein_name.shape, sequence.shape)
+    print(x.shape, y.shape, len.shape)
     print(y)
     break
 
 
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+# torch.backends.cudnn.deterministic = True
+# torch.backends.cudnn.benchmark = False
 
 # TRAINING SETUP
 def save_model(model, optimizer, scheduler, metric, epoch, path):
@@ -308,14 +308,14 @@ epoch_model_path = 'checkpoint.pth' # set the model path( Optional, you can just
 best_model_path = 'best_model.pth'# set best model path
 
 for epoch in range(config['epoch']):
-    print("\nEpoch: {}/{}".format(epoch+1, config['epochs']))
+    print("\nEpoch: {}/{}".format(epoch+1, config['epoch']))
 
     curr_lr = scheduler.float(optimizer.param_groups[0]['learning_rate'])
     train_acc, train_loss = train(model, train_loader, criterion, optimizer)
 
     print("\nEpoch {}/{}: \nTrain Acc {:.04f}%\t Train Loss {:.04f}\t Learning Rate {:.04f}".format(
         epoch + 1,
-        config['epochs'],
+        config['epoch'],
         train_acc,
         train_loss,
         curr_lr))
