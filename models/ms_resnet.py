@@ -228,7 +228,7 @@ class Network(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x0, len):
+    def forward(self, x0, lens):
         x0 = x0.permute(0, 2, 1)
         x0 = self.conv1(x0)
         x0 = self.bn1(x0)
