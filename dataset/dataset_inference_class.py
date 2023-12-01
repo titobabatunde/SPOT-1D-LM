@@ -88,14 +88,14 @@ class Proteins_Dataset_Class(Dataset):
         return torch.FloatTensor(features), torch.LongTensor(ss3_indices), protein_len, protein, seq
     # end def
 
-    def text_collate_fn(batch):
+    def text_collate_fn(self, batch):
         """
         collate function for data read from text file
         per batch
         """
 
         # sort data by protein length in descending order
-        batch.sort(key=lambda x: x[1], reverse=True)
+        batch.sort(key=lambda x: x[2], reverse=True)
 
         batch_features, batch_labels, protein_lengths = [], [], []
         protein_names, sequences = [], []
@@ -111,8 +111,10 @@ class Proteins_Dataset_Class(Dataset):
         # end for
 
         # Pad feature and label tensors to ensure they have the same shape
+        # enforce_sorted=True
+        # Pad label tensors with -1 (or another invalid class index)
         padded_features = nn.utils.rnn.pad_sequence(batch_features, batch_first=True, padding_value=0)
-        padded_labels = nn.utils.rnn.pad_sequence(batch_labels, batch_first=True, padding_value=0)
+        padded_labels = nn.utils.rnn.pad_sequence(batch_labels, batch_first=True, padding_value=-1)
 
         # returns the padded features, protein lengths,
         # protein names, and sequences

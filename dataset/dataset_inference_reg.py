@@ -97,14 +97,14 @@ class Proteins_Dataset_Reg(Dataset):
         return torch.FloatTensor(features), torch.FloatTensor(norm_labels), protein_len, protein, seq
     # end def
 
-    def text_collate_fn(batch):
+    def text_collate_fn(self, batch):
         """
         collate function for data read from text file
         per batch
         """
 
         # sort data by protein length in descending order
-        batch.sort(key=lambda x: x[1], reverse=True)
+        # batch.sort(key=lambda x: x[1], reverse=True)
 
         batch_features, batch_labels, protein_lengths = [], [], []
         protein_names, sequences = [], []
