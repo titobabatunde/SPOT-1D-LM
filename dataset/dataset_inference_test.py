@@ -57,7 +57,12 @@ class Proteins_Dataset_Test(Dataset):
         protein = prot_path.split('/')[-1].split('.')[0]
 
         # reads the protein sequence from prot_path
-        seq = read_fasta_file(prot_path)
+        # seq = read_fasta_file(prot_path)
+
+        # load label data for the protein
+        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"), allow_pickle=True)
+        seq = ''.join(labels[:, 3])
+
         # applies one-hot encdoing to the sequence
         one_hot_enc = one_hot(seq)
         # loads EEM and ProtTrans embeddings from the numpy files
@@ -83,7 +88,7 @@ class Proteins_Dataset_Test(Dataset):
         """
 
         # sort data by protein length in descending order
-        batch.sort(key=lambda x: x[1], reverse=True)
+        batch.sort(key=lambda x: x[2], reverse=True)
 
         batch_features, protein_lengths = [], []
         protein_names, sequences = [], []
@@ -98,6 +103,7 @@ class Proteins_Dataset_Test(Dataset):
         # end for
 
         # Pad feature and label tensors to ensure they have the same shape
+        # enforce_sorted=True
         padded_features = nn.utils.rnn.pad_sequence(batch_features, batch_first=True, padding_value=0)
 
         # returns the padded features, protein lengths,
