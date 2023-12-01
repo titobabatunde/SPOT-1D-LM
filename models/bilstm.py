@@ -7,7 +7,7 @@ PADDING_VALUE=0
 
 
 class Network(nn.Module):
-    def __init__(self, hidden_dim=1024, input_size=2862):
+    def __init__(self, hidden_dim=1024, input_size=2862, num_classes=3):
         super(Network, self).__init__()
 
         self.hidden_dim = hidden_dim
@@ -19,7 +19,7 @@ class Network(nn.Module):
         self.linear1 = nn.Linear(in_features=2*self.hidden_dim, out_features=1000)
         self.linear2 = nn.Linear(in_features=1000, out_features=1000)
 
-        self.linear3 = nn.Linear(in_features=1000, out_features=3) # 11
+        self.linear3 = nn.Linear(in_features=1000, out_features=num_classes) # 11
 
 
     def forward(self, x, seq_lens):
