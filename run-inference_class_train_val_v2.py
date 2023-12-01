@@ -1,6 +1,7 @@
 # %%
 import time
 import torch
+import random
 import argparse
 from torch.utils.data import DataLoader
 import numpy as np
@@ -34,9 +35,11 @@ print("Device: ", DEVICE)
 # %%
 # hyperparameters
 config = dict(
-    file_list_train = "spot_1d_lm/lists/train.txt",
-    file_list_val   = "spot_1d_lm/lists/val.txt",
-    file_list_test  = "spot_1d_lm/lists/casp12.txt",
+    file_path       = "spot_1d_lm/lists/",
+    file_list_data  = "files.txt",
+    file_list_train = "train.txt",
+    file_list_val   = "val.txt",
+    file_list_test  = "casp12.txt",
     batch_size      = 10,
     epoch           = 150,
     loss            = torch.nn.CrossEntropyLoss(),
@@ -44,15 +47,46 @@ config = dict(
     run             = 1
 )
 
+def read_and_split_file(file_path, file_name_lists, train_ratio=0.8):
+    # Read the list of protein names
+    with open(os.path.join(file_path, file_name_lists), 'r') as file:
+        protein_names = file.readlines()
+    
+    # Remove any trailing newline characters
+    protein_names = [name.strip() for name in protein_names]
+
+    # Shuffle the list
+    random.shuffle(protein_names)
+
+    # Calculate the split index
+    split_index = int(len(protein_names) * train_ratio)
+
+    # Split the list into training and validation
+    train_list = protein_names[:split_index]
+    val_list = protein_names[split_index:]
+
+    # Save the training and validation lists
+    with open(os.path.join(file_path, 'train.txt'), 'w') as file:
+        for name in train_list:
+            file.write(name + '\n')
+
+    with open(os.path.join(file_path, 'val.txt'), 'w') as file:
+        for name in val_list:
+            file.write(name + '\n')
+# end def
+
+read_and_split_file(config['file_path'], config['file_list_data'])
+
+
 # %%
 train_dataset       = Proteins_Dataset_Class(
-    file_name_list  = config["file_list_train"]
+    file_name_list  = os.path.join(config['file_path'], config["file_list_train"])
 )
 valid_dataset       = Proteins_Dataset_Class(
-    file_name_list  = config["file_list_val"]
+    file_name_list  = os.path.join(config['file_path'], config["file_list_val"])
 )
 test_dataset        = Proteins_Dataset_Test(
-    file_name_list  = config["file_list_test"]
+    file_name_list  = os.path.join(config['file_path'], config["file_list_test"])
 )
 
 gc.collect()
