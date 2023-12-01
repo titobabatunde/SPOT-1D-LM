@@ -28,6 +28,8 @@ SS3_CLASSES = ['C', 'E', 'H']  # Define your SS3 classes
 """
 latest file fixed validate and train method
 """
+DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
+print("Device: ", DEVICE)
 
 # %%
 # hyperparameters
@@ -38,7 +40,6 @@ config = dict(
     batch_size      = 10,
     epoch           = 150,
     loss            = torch.nn.CrossEntropyLoss(),
-    device          = "cuda:3",
     learning_rate   = 1e-3,
     run             = 1
 )
@@ -160,10 +161,10 @@ class EnsembleNetwork(torch.nn.Module):
         out3 = self.model3(x, x_lens)
 
         # Average the outputs
-        avg_out = (out1 + out2 + out3) / 3
+        result = (out1 + out2 + out3) / 3
 
-        # Apply softmax
-        result = self.softmax(avg_out)
+        # # Apply softmax
+        # result = self.softmax(avg_out)
         return result
     # end def
 # end class
@@ -180,7 +181,7 @@ def initialize_weights(tensor):
 
 model = EnsembleNetwork(model1, model2, model3)
 model.apply(initialize_weights)
-model = model.to(config['device'])
+model = model.to(DEVICE)
 print(model)
 
 # %%
@@ -208,7 +209,7 @@ def train(model, dataloader, criterion, optimizer):
         optimizer.zero_grad()  # zero gradients
 
         x, y, lengths, protein_names, sequences = batch
-        x, y = x.to(config['device']), y.to(config['device'])
+        x, y = x.to(DEVICE), y.to(DEVICE)
         # y shape is [batch_size, sequence_length]
 
         # -1 is used to represent missing data
@@ -280,7 +281,7 @@ def validate(model, dataloader):
     # with torch.no_grad():  # Disable gradient computation
     for i, batch in enumerate(dataloader):
         x, y, lengths, protein_names, sequences = batch
-        x, y = x.to(config['device']), y.to(config['device'])
+        x, y = x.to(DEVICE), y.to(DEVICE)
 
         # get model outputs
         with torch.inference_mode():
@@ -359,6 +360,7 @@ for epoch in range(config['epoch']):
     print("\tVal Loss {:.04f}\t Val Acc {:.04f}%".format(val_loss, val_acc))    
 
     wandb.log({
+        'train_acc' : train_acc,
         'train_loss': train_loss,
         'valid_loss': val_loss,
         'valid_acc' : val_acc,
@@ -382,6 +384,6 @@ for epoch in range(config['epoch']):
 run.finish()
 
 # %%
-print(config['epochs'])
+print(config['epoch'])
 
 
