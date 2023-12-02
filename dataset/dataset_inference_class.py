@@ -113,7 +113,7 @@ class Proteins_Dataset_Class(Dataset):
         # Pad feature and label tensors to ensure they have the same shape
         # enforce_sorted=True
         # Pad label tensors with -1 (or another invalid class index)
-        padded_features = nn.utils.rnn.pad_sequence(batch_features, batch_first=True, padding_value=0)
+        padded_features = nn.utils.rnn.pad_sequence(batch_features, batch_first=True, padding_value=-1)
         padded_labels = nn.utils.rnn.pad_sequence(batch_labels, batch_first=True, padding_value=-1)
 
         # returns the padded features, protein lengths,
