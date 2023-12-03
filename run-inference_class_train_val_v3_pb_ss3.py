@@ -18,7 +18,7 @@ import subprocess
 
 # %%
 # import Datasets and Networks
-from dataset.dataset_inference_class_pb import Proteins_Dataset_Class
+from dataset.dataset_inference_class_ss3 import Proteins_Dataset_Class
 from dataset.dataset_inference_test import Proteins_Dataset_Test
 
 
@@ -29,7 +29,7 @@ SS3_CLASSES = ['C', 'E', 'H']  # Define your SS3 classes
 """
 latest file fixed validate and train method
 """
-DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
 print("Device: ", DEVICE)
 
 # %%
@@ -119,6 +119,7 @@ test_loader     = DataLoader(
 
 # %%
 print("No. of train proteins   : ", train_dataset.__len__())
+print("No. of valid proteins   : ", valid_dataset.__len__())
 print("Batch size           : ", config['batch_size'])
 print("Train batches        : ", train_loader.__len__())
 print("Valid batches        : ", valid_loader.__len__())

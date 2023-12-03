@@ -46,30 +46,39 @@ class Proteins_Dataset_Class(Dataset):
         # these file path to a list of protein sequences are read
         # protein_list is a list of file paths to fasta per protein
         self.protein_list = read_list(file_name_list)
+        self.protein = []
+        self.seq = []
+        self.ss3_idxs = []
+        for name in self.protein_list:
+            prot_name = name.split('/')[-1].split('.')[0]
+            label = np.load(os.path.join("spot_1d_lm/labels", prot_name + ".npy"), allow_pickle=True)
+            # ignore index will be 0
+            ss3 = np.array([SS3_CLASSES.index(aa) if aa in SS3_CLASSES else -1 for aa in label[:, 4]])
+            vidx = np.where(ss3 != -1)[0] # valid indices
+            ss3 = ss3[vidx]
+            sequence = ''.join(label[vidx, 3])
+            if len(sequence)>0:
+                self.ss3_idxs.append(ss3)
+                self.seq.append(sequence)
+                self.protein.append(prot_name)
+            # end if
+        # end for
+    # end def __init___
 
 
     def __len__(self):
-        return len(self.protein_list)
+        return len(self.protein)
 
     def __getitem__(self, idx):
-        # file path for the protein at index idx
-        prot_path = self.protein_list[idx]
-        # extracts the protein name from the protein path
-        protein = prot_path.split('/')[-1].split('.')[0]
-
-        # load label data for the protein
-        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"), allow_pickle=True)
+        # extracts the protein name 
+        protein = self.protein[idx]
 
         # normalize specific labels
         # size of ss3 indices is just L
-        ss3_indices = np.array([SS3_CLASSES.index(aa) if aa in SS3_CLASSES else -1 for aa in labels[:, 4]])
-        vidx = np.where(ss3_indices != -1)[0] # valid indices
-        ss3_indices = ss3_indices[vidx]
-
+        ss3_indices = self.ss3_idxs[idx]
 
         # reads the protein sequence from prot_path
-        # seq = read_fasta_file(prot_path)
-        seq = ''.join(labels[vidx, 3])
+        seq = self.seq[idx]
         # print(seq)
         # applies one-hot encdoing to the sequence
         # size (L, 20)
@@ -79,7 +88,7 @@ class Proteins_Dataset_Class(Dataset):
         # esm size is (L, 1280)
         embedding1 = np.load(os.path.join("inputs/", protein + "_esm_ss3.npy"))
         # protein bert size is (L, 1562)
-        embedding2 = np.load(os.path.join("inputs/", protein + "_pt_ss3.npy"))
+        embedding2 = np.load(os.path.join("inputs/", protein + "_pb_ss3.npy"))
         # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
 
         # features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
