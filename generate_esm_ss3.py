@@ -30,7 +30,7 @@ for prot_path in tqdm(prot_list):
     ss3_indices = np.array([SS3_CLASSES.index(aa) if aa in SS3_CLASSES else -1 for aa in labels[:, 4]])
     vidx = np.where(ss3_indices != -1)[0] # valid indices
 
-    seq = ''.join(labels[:, 3])
+    seq = ''.join(labels[vidx, 3])
     # print(seq)
 
     data = [(prot_name, seq)]

@@ -259,6 +259,7 @@ def train(model, dataloader, criterion, optimizer):
             outputs = outputs.permute(0,2,1)
             # print(f'before masking: outputs shape: {outputs.shape} and y shape: {y.shape}')
             # Create a 3D mask that matches the outputs tensor shape
+            # mask for inidices where are zero
             valid_data_mask = (y != -1).unsqueeze(1).expand_as(outputs)
             outputs = outputs[valid_data_mask].view(-1, 3)  # Flatten and keep 3 class outputs
             # apply mask to y
@@ -366,6 +367,7 @@ run = wandb.init(
 
 # %%
 """ Experiments """
+# remove early stopping
 patience            = 15
 best_valacc         = 0.0
 improvement_count   = 0

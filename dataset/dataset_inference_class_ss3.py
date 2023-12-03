@@ -63,13 +63,13 @@ class Proteins_Dataset_Class(Dataset):
         # normalize specific labels
         # size of ss3 indices is just L
         ss3_indices = np.array([SS3_CLASSES.index(aa) if aa in SS3_CLASSES else -1 for aa in labels[:, 4]])
-        # vidx = np.where(ss3_indices != -1)[0] # valid indices
-        # ss3_indices = ss3_indices[vidx]
+        vidx = np.where(ss3_indices != -1)[0] # valid indices
+        ss3_indices = ss3_indices[vidx]
 
 
         # reads the protein sequence from prot_path
         # seq = read_fasta_file(prot_path)
-        seq = ''.join(labels[:, 3])
+        seq = ''.join(labels[vidx, 3])
         # print(seq)
         # applies one-hot encdoing to the sequence
         # size (L, 20)
@@ -77,9 +77,9 @@ class Proteins_Dataset_Class(Dataset):
         # print(one_hot_enc.shape) # (307, 20)
         # loads ESM and ProteinBert embeddings from the numpy files
         # esm size is (L, 1280)
-        embedding1 = np.load(os.path.join("inputs/", protein + "_esm.npy"))
+        embedding1 = np.load(os.path.join("inputs/", protein + "_esm_ss3.npy"))
         # protein bert size is (L, 1562)
-        embedding2 = np.load(os.path.join("inputs/", protein + "_pt.npy"))
+        embedding2 = np.load(os.path.join("inputs/", protein + "_pt_ss3.npy"))
         # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
 
         # features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
