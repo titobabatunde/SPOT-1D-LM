@@ -29,7 +29,7 @@ SS3_CLASSES = ['C', 'E', 'H']  # Define your SS3 classes
 """
 latest file fixed validate and train method
 """
-DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 print("Device: ", DEVICE)
 
 # %%
@@ -42,9 +42,9 @@ config = dict(
     file_list_test  = "casp12.txt",
     batch_size      = 10,
     epoch           = 150,
-    loss            = torch.nn.CrossEntropyLoss(),
+    loss            = torch.nn.CrossEntropyLoss().to(DEVICE),
     learning_rate   = 1e-3,
-    run             = 1
+    run             = 4
 )
 
 def read_and_split_file(file_path, file_name_lists, train_ratio=0.8):
@@ -174,9 +174,9 @@ def load_model(best_path, epoch_path, model, mode= 'best', metric= 'valid_acc', 
 torch.cuda.empty_cache()
 gc.collect()
 
-model1 = Network(input_size=2324)
-model2 = Network2(input_channel=2324)
-model3 = Network3(input_channel=2324)
+model1 = Network(input_size=2862)
+model2 = Network2(input_channel=2862)
+model3 = Network3(input_channel=2862)
 
 # %%
 class EnsembleNetwork(torch.nn.Module):
@@ -222,11 +222,12 @@ print(model)
 optimizer   = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
 criterion   = config['loss']
 scaler      = torch.cuda.amp.GradScaler()  # Initialize the gradient scaler for mixed-precision training
-scheduler   = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
-                                                         mode='min', 
-                                                         factor=0.8, 
-                                                         patience=3, 
-                                                         verbose=True)
+# scheduler   = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
+#                                                          mode='min', 
+#                                                          factor=0.8, 
+#                                                          patience=3, 
+#                                                          verbose=True)
+scheduler    = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 10)
 
 # %%
 def train(model, dataloader, criterion, optimizer):
@@ -357,7 +358,7 @@ def validate(model, dataloader):
 wandb.login(key="3e9397f29d471b6beecce85c11b0ffc7a75c8296") #API Key is in your wandb account, under settings (wandb.ai/settings)
 
 run = wandb.init(
-    name = "project-submission", ## Wandb creates random run names if you skip this field
+    name = "post-mask-cosine-10", ## Wandb creates random run names if you skip this field
     reinit = True, ### Allows reinitalizing runs when you re-run this cell
     # run_id = ### Insert specific run id here if you want to resume a previous run
     # resume = "must" ### You need this to resume previous runs, but comment out reinit = True when using this
@@ -390,7 +391,8 @@ for epoch in range(config['epoch']):
         curr_lr))
 
     val_acc, val_loss = validate(model, valid_loader)
-    scheduler.step(val_acc)
+    # scheduler.step(val_acc)
+    scheduler.step()
 
     print("\tTrain Loss {:.04f}\t Learning Rate {:.07f}".format(train_loss, curr_lr))
     print("\tVal Loss {:.04f}\t Val Acc {:.04f}%".format(val_loss, val_acc))    

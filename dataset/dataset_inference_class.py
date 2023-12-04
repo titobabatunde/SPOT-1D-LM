@@ -79,7 +79,7 @@ class Proteins_Dataset_Class(Dataset):
         # esm size is (L, 1280)
         embedding1 = np.load(os.path.join("inputs/", protein + "_esm.npy"))
         # protein bert size is (L, 1562)
-        embedding2 = np.load(os.path.join("inputs/", protein + "_pt.npy"))
+        embedding2 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
         # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
 
         # features = np.concatenate((one_hot_enc, embedding1, embedding2), axis=1)
