@@ -55,17 +55,19 @@ class Proteins_Dataset_Reg(Dataset):
         # extracts the protein name from the protein path
         protein = prot_path.split('/')[-1].split('.')[0]
 
+        # load label data for the protein
+        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"), allow_pickle=True)
+
         # reads the protein sequence from prot_path
-        seq = read_fasta_file(prot_path)
+        # seq = read_fasta_file(prot_path)
+        seq = ''.join(labels[:, 3])
+
         # applies one-hot encdoing to the sequence
         one_hot_enc = one_hot(seq)
         # loads EEM and ProtTrans embeddings from the numpy files
         embedding1 = np.load(os.path.join("inputs/", protein + "_esm.npy"))
-        embedding2 = np.load(os.path.join("inputs/", protein + "_pt.npy"))
+        embedding2 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
         # embedding1 = np.load(os.path.join("inputs/", protein + "_pb.npy"))
-
-        # load label data for the protein
-        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"))
 
         # normalize specific labels
         norm_labels = np.empty((labels.shape[0], 11))
@@ -120,8 +122,8 @@ class Proteins_Dataset_Reg(Dataset):
         # end for
 
         # Pad feature and label tensors to ensure they have the same shape
-        padded_features = nn.utils.rnn.pad_sequence(batch_features, batch_first=True, padding_value=0)
-        padded_labels = nn.utils.rnn.pad_sequence(batch_labels, batch_first=True, padding_value=0)
+        padded_features = nn.utils.rnn.pad_sequence(batch_features, batch_first=True, padding_value=-1)
+        padded_labels = nn.utils.rnn.pad_sequence(batch_labels, batch_first=True, padding_value=-1)
 
         # returns the padded features, protein lengths,
         # protein names, and sequences
