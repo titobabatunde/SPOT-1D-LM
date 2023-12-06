@@ -44,7 +44,7 @@ config = dict(
     batch_size      = 10,
     epoch           = 150,
     loss            = torch.nn.CrossEntropyLoss().to(DEVICE),
-    learning_rate   = 1e-4,
+    learning_rate   = 1e-3,
     run             = 4
 )
 
@@ -175,9 +175,9 @@ def load_model(best_path, epoch_path, model, mode= 'best', metric= 'valid_acc', 
 torch.cuda.empty_cache()
 gc.collect()
 
-model1 = Network(input_size=2862, num_classes=8)
-model2 = Network2(input_channel=2862, num_classes=8)
-model3 = Network3(input_channel=2862, num_classes=8)
+model1 = Network(input_size=2862, num_classes=len(SS8_CLASSES))
+model2 = Network2(input_channel=2862, num_classes=len(SS8_CLASSES))
+model3 = Network3(input_channel=2862, num_classes=len(SS8_CLASSES))
 
 # %%
 class EnsembleNetwork(torch.nn.Module):
