@@ -17,7 +17,7 @@ batch_converter = alphabet.get_batch_converter()
 model = model.to(args.device)
 
 prot_list = read_list(args.file_list)
-SS3_CLASSES = ['C', 'E', 'H']
+SS8_CLASSES = ['C', 'S', 'T', 'H', 'G', 'I', 'E', 'B']
 
 for prot_path in tqdm(prot_list):
 
@@ -27,7 +27,7 @@ for prot_path in tqdm(prot_list):
     # print(prot_name)
     # seq = read_fasta_file(prot_path)
     # print(labels[:, 3])
-    ss3_indices = np.array([SS3_CLASSES.index(aa) if aa in SS3_CLASSES else -1 for aa in labels[:, 4]])
+    ss3_indices = np.array([SS8_CLASSES.index(aa) if aa in SS8_CLASSES else -1 for aa in labels[:, 4]])
     vidx = np.where(ss3_indices != -1)[0] # valid indices
 
     seq = ''.join(labels[vidx, 3])
