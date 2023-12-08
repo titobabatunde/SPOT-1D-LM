@@ -25,9 +25,9 @@ from dataset.dataset_inference_class_ss8_premask import Proteins_Dataset_Class
 from dataset.dataset_inference_test import Proteins_Dataset_Test
 
 
-from models_train.bilstm import Network
+# from models_train.bilstm import Network
 from models_train.ms_resnet import Network as Network2
-from models_train.ms_res_lstm import Network as Network3
+# from models_train.ms_res_lstm import Network as Network3
 SS8_CLASSES = ['C', 'S', 'T', 'H', 'G', 'I', 'E', 'B']  # Define your SS8 classes
 
 """
@@ -50,7 +50,7 @@ config = dict(
     epoch           = 150,
     loss            = torch.nn.CrossEntropyLoss(ignore_index=-1).to(DEVICE),
     learning_rate   = 1e-4,
-    run             = 8
+    run             = 10
 )
 
 def read_and_split_file(file_path, file_name_lists, train_ratio=0.8):
@@ -124,7 +124,7 @@ test_loader     = DataLoader(
 )
 
 # %%
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
 print("No. of train proteins   : ", train_dataset.__len__())
 print("Batch size           : ", config['batch_size'])
@@ -135,7 +135,7 @@ print("Test batches         : ", test_loader.__len__())
 print("\nChecking the shapes of the data...")
 
 
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
 for batch in train_loader:
     # x, y, lens, protein_name, sequence = batch
@@ -184,31 +184,51 @@ def load_model(best_path, epoch_path, model, mode= 'best', metric= 'valid_acc', 
 # end def
 
 # %%
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
 
-model1 = Network(input_size=2862, num_classes=len(SS8_CLASSES))
+# model1 = Network(input_size=2862, num_classes=len(SS8_CLASSES))
 model2 = Network2(input_channel=2862, num_classes=len(SS8_CLASSES))
-model3 = Network3(input_channel=2862, num_classes=len(SS8_CLASSES))
+# model3 = Network3(input_channel=2862, num_classes=len(SS8_CLASSES))
 
 # %%
+# class EnsembleNetwork(torch.nn.Module):
+#     def __init__(self, model1, model2, model3):
+#         super(EnsembleNetwork, self).__init__()
+#         self.model1 = model1
+#         self.model2 = model2
+#         self.model3 = model3
+#         self.softmax = torch.nn.Softmax(dim=1)
+#     # end def
+
+#     def forward(self, x, x_lens):
+#         # Get outputs from each model
+#         out1 = self.model1(x, x_lens)
+#         out2 = self.model2(x, x_lens)
+#         out3 = self.model3(x, x_lens)
+
+#         # Average the outputs
+#         result = (out1 + out2 + out3) / 3
+
+#         # # Apply softmax
+#         # result = self.softmax(avg_out)
+#         return result
+#     # end def
+# # end class
+
 class EnsembleNetwork(torch.nn.Module):
-    def __init__(self, model1, model2, model3):
+    def __init__(self, model2):
         super(EnsembleNetwork, self).__init__()
-        self.model1 = model1
         self.model2 = model2
-        self.model3 = model3
         self.softmax = torch.nn.Softmax(dim=1)
     # end def
 
     def forward(self, x, x_lens):
         # Get outputs from each model
-        out1 = self.model1(x, x_lens)
         out2 = self.model2(x, x_lens)
-        out3 = self.model3(x, x_lens)
 
         # Average the outputs
-        result = (out1 + out2 + out3) / 3
+        result = out2
 
         # # Apply softmax
         # result = self.softmax(avg_out)
@@ -217,7 +237,7 @@ class EnsembleNetwork(torch.nn.Module):
 # end class
 
 # %%
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
 
 # def initialize_weights(tensor):
@@ -226,7 +246,8 @@ gc.collect()
 #     # end if
 # # end def
 
-model = EnsembleNetwork(model1, model2, model3)
+# model = EnsembleNetwork(model1, model2, model3)
+model = EnsembleNetwork(model2)
 model = model.to(DEVICE)
 # model.apply(initialize_weights)
 print(model)
@@ -238,7 +259,7 @@ criterion   = config['loss']
 scheduler   = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
                                                          mode='min', 
                                                          factor=0.8, 
-                                                         patience=5, 
+                                                         patience=2, 
                                                          verbose=True)
 # scheduler    = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 10)
 
@@ -270,7 +291,7 @@ def train(model, dataloader, criterion, optimizer):
         # output shapes is [batch_size, sequence_length, num_classes]
         # this needs to be [batch_size, num_classes, sequence_length]
         outputs = outputs.permute(0,2,1)
-        # print(f'before masking: outputs shape: {outputs.shape} and y shape: {y.shape}')
+        # print(f'after permuting: outputs shape: {outputs.shape} and y shape: {y.shape}')
         # Create a 3D mask that matches the outputs tensor shape
         # mask for inidices where are zero
         predictions = torch.argmax(outputs, dim=1)
@@ -310,7 +331,7 @@ def train(model, dataloader, criterion, optimizer):
         batch_bar.update() # update tqdm
         del x, y, lengths, protein_names, sequences
         # del loss, accuracy, samples, correct_predictions, mask, predictions
-        # torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
     
     batch_bar.close()
 
@@ -362,7 +383,7 @@ def validate(model, dataloader):
         batch_bar.update()
         del x, y, lengths, protein_names, sequences
         # del loss, accuracy, samples, correct_predictions, mask, predictions
-        # torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
         
     # end for
 
@@ -387,7 +408,7 @@ run = wandb.init(
 
 # %%
 gc.collect()
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 """ Experiments """
 # remove early stopping
 patience            = 15
@@ -404,7 +425,7 @@ for epoch in range(config['epoch']):
     curr_lr = optimizer.param_groups[0]['lr']
     train_acc, train_loss = train(model, train_loader, criterion, optimizer)
     gc.collect()
-    # torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
     print("\nEpoch {}/{}: \nTrain Acc {:.04f}%\t Train Loss {:.04f}\t Learning Rate {:.04f}".format(
         epoch + 1,
@@ -417,7 +438,7 @@ for epoch in range(config['epoch']):
     scheduler.step(val_loss)
     # scheduler.step()
     gc.collect()
-    # torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
     print("\tTrain Loss {:.04f}\t Learning Rate {:.07f}".format(train_loss, curr_lr))
     print("\tVal Loss {:.04f}\t Val Acc {:.04f}%".format(val_loss, val_acc))    
@@ -446,11 +467,11 @@ for epoch in range(config['epoch']):
     #   You may find it interesting to exlplore Wandb Artifcats to version your models
     del train_acc, train_loss, val_acc, val_loss
     gc.collect()
-    # torch.cuda.empty_cache()    
+    torch.cuda.empty_cache()    
 run.finish()
 
 gc.collect()
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 
 # %%
 print(config['epoch'])
@@ -464,7 +485,7 @@ import os
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 print(torch.__version__)
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
 
 x = torch.rand(5, 3)

@@ -1,14 +1,11 @@
 # %%
-import os
-# os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-
 import time
 import torch
 import random
 import argparse
 from torch.utils.data import DataLoader
 import numpy as np
-
+import os
 import gc
 import time
 import sys
@@ -25,18 +22,17 @@ from dataset.dataset_inference_class_ss8_premask import Proteins_Dataset_Class
 from dataset.dataset_inference_test import Proteins_Dataset_Test
 
 
-from models_train.bilstm import Network
-from models_train.ms_resnet import Network as Network2
-from models_train.ms_res_lstm import Network as Network3
+from models.bilstm import Network
+from models.ms_resnet import Network as Network2
+from models.ms_res_lstm import Network as Network3
 SS8_CLASSES = ['C', 'S', 'T', 'H', 'G', 'I', 'E', 'B']  # Define your SS8 classes
 
 """
 latest file fixed validate and train method
 """
-# DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-DEVICE = "cuda:1"
-# DEVICE = "cpu"
+DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 print("Device: ", DEVICE)
+# torch.backends.cudnn.enabled = False
 
 # %%
 # hyperparameters
@@ -46,11 +42,11 @@ config = dict(
     file_list_train = "train.txt",
     file_list_val   = "val.txt",
     file_list_test  = "casp12.txt",
-    batch_size      = 10, #10
+    batch_size      = 10,
     epoch           = 150,
     loss            = torch.nn.CrossEntropyLoss(ignore_index=-1).to(DEVICE),
-    learning_rate   = 1e-4,
-    run             = 8
+    learning_rate   = 2e-4,
+    run             = 9
 )
 
 def read_and_split_file(file_path, file_name_lists, train_ratio=0.8):
@@ -95,13 +91,15 @@ test_dataset        = Proteins_Dataset_Test(
     file_name_list  = os.path.join(config['file_path'], config["file_list_test"])
 )
 
+torch.cuda.empty_cache()
 gc.collect()
+
 train_loader    = DataLoader(
     dataset     = train_dataset,
     batch_size  = config['batch_size'],
     shuffle     = True,
-    num_workers = 4,
-    pin_memory  = False, #True
+    num_workers = 4, # 4
+    pin_memory  = True,
     collate_fn  = train_dataset.text_collate_fn
 )
 
@@ -110,7 +108,7 @@ valid_loader    = DataLoader(
     batch_size  = config['batch_size'],
     shuffle     = False,
     num_workers = 2,
-    pin_memory  = False, # True
+    pin_memory  = True,
     collate_fn  = valid_dataset.text_collate_fn
 )
 
@@ -119,34 +117,35 @@ test_loader     = DataLoader(
     batch_size  = config['batch_size'],
     shuffle     = False,
     num_workers = 2,
-    pin_memory  = False,
+    pin_memory  = True,
     collate_fn  = test_dataset.text_collate_fn
 )
 
 # %%
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
+
 print("No. of train proteins   : ", train_dataset.__len__())
 print("Batch size           : ", config['batch_size'])
 print("Train batches        : ", train_loader.__len__())
 print("Valid batches        : ", valid_loader.__len__())
 print("Test batches         : ", test_loader.__len__())
 
-print("\nChecking the shapes of the data...")
-
-
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
-for batch in train_loader:
-    # x, y, lens, protein_name, sequence = batch
-    # print(x.shape, y.shape, lens.shape) 
-    print(batch)
-    # print('protein names in batch')
-    # print(protein_name)
-    # print('sequences in batch')
-    # print(sequence)
-    break
 
+# print("\nChecking the shapes of the data...")
+# for batch in train_loader:
+#     x, y, lens, protein_name, sequence = batch
+#     print(x.shape, y.shape, lens.shape) 
+#     # print('protein names in batch')
+#     # print(protein_name)
+#     # print('sequences in batch')
+#     # print(sequence)
+#     break
+
+torch.cuda.empty_cache()
+gc.collect()
 # %%
 # TRAINING SETUP
 def save_model(model, optimizer, scheduler, metric, epoch, path):
@@ -184,7 +183,7 @@ def load_model(best_path, epoch_path, model, mode= 'best', metric= 'valid_acc', 
 # end def
 
 # %%
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
 
 model1 = Network(input_size=2862, num_classes=len(SS8_CLASSES))
@@ -217,7 +216,7 @@ class EnsembleNetwork(torch.nn.Module):
 # end class
 
 # %%
-# torch.cuda.empty_cache()
+torch.cuda.empty_cache()
 gc.collect()
 
 # def initialize_weights(tensor):
@@ -234,7 +233,7 @@ print(model)
 # %%
 optimizer   = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
 criterion   = config['loss']
-# scaler      = torch.cuda.amp.GradScaler()  # Initialize the gradient scaler for mixed-precision training
+scaler      = torch.cuda.amp.GradScaler()  # Initialize the gradient scaler for mixed-precision training
 scheduler   = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
                                                          mode='min', 
                                                          factor=0.8, 
@@ -265,22 +264,22 @@ def train(model, dataloader, criterion, optimizer):
 
 
         # Mixed-precision training context
-        # with torch.cuda.amp.autocast():
-        outputs = model(x, lengths)
-        # output shapes is [batch_size, sequence_length, num_classes]
-        # this needs to be [batch_size, num_classes, sequence_length]
-        outputs = outputs.permute(0,2,1)
-        # print(f'before masking: outputs shape: {outputs.shape} and y shape: {y.shape}')
-        # Create a 3D mask that matches the outputs tensor shape
-        # mask for inidices where are zero
-        predictions = torch.argmax(outputs, dim=1)
-        mask = y != -1  # Create a mask for non-padded values
-        correct_predictions = (predictions == y) & mask  # Apply mask
-        samples = mask.sum().item()
-        total_correct += correct_predictions.sum().item()
-        accuracy = correct_predictions.sum().item() / samples
+        with torch.cuda.amp.autocast():
+            outputs = model(x, lengths)
+            # output shapes is [batch_size, sequence_length, num_classes]
+            # this needs to be [batch_size, num_classes, sequence_length]
+            outputs = outputs.permute(0,2,1)
+            # print(f'before masking: outputs shape: {outputs.shape} and y shape: {y.shape}')
+            # Create a 3D mask that matches the outputs tensor shape
+            # mask for inidices where are zero
+            predictions = torch.argmax(outputs, dim=1)
+            mask = y != -1  # Create a mask for non-padded values
+            correct_predictions = (predictions == y) & mask  # Apply mask
+            samples = mask.sum().item()
+            total_correct += correct_predictions.sum().item()
+            accuracy = correct_predictions.sum().item() / samples
 
-        loss = criterion(outputs, y)
+            loss = criterion(outputs, y)
         # end with
 
         # print(f'after masking: outputs shape: {outputs.shape} and y shape: {y.shape}')
@@ -298,19 +297,15 @@ def train(model, dataloader, criterion, optimizer):
         )
 
         # Backward pass with scaled gradients
-        loss.backward()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)  # Update model parameters
+        scaler.update()  # Update the scale for next iteration
 
-        # scaler.scale(loss).backward()
-        # scaler.step(optimizer)  # Update model parameters
-        # scaler.update()  # Update the scale for next iteration
-
-        optimizer.step()
-
+        # scheduler.step()
 
         batch_bar.update() # update tqdm
         del x, y, lengths, protein_names, sequences
-        # del loss, accuracy, samples, correct_predictions, mask, predictions
-        # torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
     
     batch_bar.close()
 
@@ -360,10 +355,6 @@ def validate(model, dataloader):
         )
 
         batch_bar.update()
-        del x, y, lengths, protein_names, sequences
-        # del loss, accuracy, samples, correct_predictions, mask, predictions
-        # torch.cuda.empty_cache()
-        
     # end for
 
     batch_bar.close()
@@ -377,7 +368,7 @@ def validate(model, dataloader):
 wandb.login(key="3e9397f29d471b6beecce85c11b0ffc7a75c8296") #API Key is in your wandb account, under settings (wandb.ai/settings)
 
 run = wandb.init(
-    name = "pmask-cmod-plateau-5_0.8", ## Wandb creates random run names if you skip this field
+    name = "pre-mask-plateau-5_0.8", ## Wandb creates random run names if you skip this field
     reinit = True, ### Allows reinitalizing runs when you re-run this cell
     # run_id = ### Insert specific run id here if you want to resume a previous run
     # resume = "must" ### You need this to resume previous runs, but comment out reinit = True when using this
@@ -386,8 +377,6 @@ run = wandb.init(
 )
 
 # %%
-gc.collect()
-# torch.cuda.empty_cache()
 """ Experiments """
 # remove early stopping
 patience            = 15
@@ -403,8 +392,6 @@ for epoch in range(config['epoch']):
     # curr_lr = scheduler.float(optimizer.param_groups[0]['lr'])
     curr_lr = optimizer.param_groups[0]['lr']
     train_acc, train_loss = train(model, train_loader, criterion, optimizer)
-    gc.collect()
-    # torch.cuda.empty_cache()
 
     print("\nEpoch {}/{}: \nTrain Acc {:.04f}%\t Train Loss {:.04f}\t Learning Rate {:.04f}".format(
         epoch + 1,
@@ -414,10 +401,8 @@ for epoch in range(config['epoch']):
         curr_lr))
 
     val_acc, val_loss = validate(model, valid_loader)
-    scheduler.step(val_loss)
+    scheduler.step(val_acc)
     # scheduler.step()
-    gc.collect()
-    # torch.cuda.empty_cache()
 
     print("\tTrain Loss {:.04f}\t Learning Rate {:.07f}".format(train_loss, curr_lr))
     print("\tVal Loss {:.04f}\t Val Acc {:.04f}%".format(val_loss, val_acc))    
@@ -436,43 +421,17 @@ for epoch in range(config['epoch']):
         wandb.save(epoch_model_path)
         print("Saved epoch model")
         best_valacc = val_acc
-        improvement_count = 0
-    else:
-        improvement_count+=1
+    #     improvement_count = 0
+    # else:
+    #     improvement_count+=1
 
-    if improvement_count >=patience:
-        print(f"Early stopping after {epoch+1} epochs due to no improvement in validation accuracy.")
-        break 
-    #   You may find it interesting to exlplore Wandb Artifcats to version your models
-    del train_acc, train_loss, val_acc, val_loss
-    gc.collect()
-    # torch.cuda.empty_cache()    
+    # if improvement_count >=patience:
+    #     print(f"Early stopping after {epoch+1} epochs due to no improvement in validation accuracy.")
+    #     break 
+      # You may find it interesting to exlplore Wandb Artifcats to version your models
 run.finish()
-
-gc.collect()
-# torch.cuda.empty_cache()
 
 # %%
 print(config['epoch'])
 
 
-"""
-import torch
-import gc
-import os
-
-os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-
-print(torch.__version__)
-# torch.cuda.empty_cache()
-gc.collect()
-
-x = torch.rand(5, 3)
-print(x)
-
-if torch.cuda.is_available():
-    x = x.to('cuda:2')
-    print(x)
-
-
-"""
