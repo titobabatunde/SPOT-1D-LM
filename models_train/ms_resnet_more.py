@@ -2,22 +2,32 @@ import torch
 import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
+import torch.nn.functional as F
 
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.Conv1d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding= 1, bias=False) # changed kernel_size to 7
+    kernel_size = 3
+    # padding = (kernel_size - stride) // 2
+    padding = 1
+    return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
+                     padding=padding, bias=False) # changed kernel_size to 7
 
 
 def conv5x5(in_planes, out_planes, stride=1):
-    return nn.Conv1d(in_planes, out_planes, kernel_size=5, stride=stride,
-                     padding=2, bias=False) # change kernel_size to 9
+    kernel_size = 5
+    # padding = (kernel_size - stride) // 2
+    padding = 2
+    return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
+                     padding=padding, bias=False) # change kernel_size to 9
 
 
 def conv7x7(in_planes, out_planes, stride=1):
-    return nn.Conv1d(in_planes, out_planes, kernel_size=7, stride=stride,
-                     padding=3, bias=False) # change kernel_size to 15
+    kernel_size = 7
+    # padding = (kernel_size - stride) // 2
+    padding = 3
+    return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
+                     padding=padding, bias=False) # change kernel_size to 15
 
 
 class BasicBlock3x3(nn.Module):
@@ -36,6 +46,7 @@ class BasicBlock3x3(nn.Module):
 
     def forward(self, x):
         residual = x
+        # print(f'residual shape before conv1 {residual.shape}')
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -47,7 +58,7 @@ class BasicBlock3x3(nn.Module):
 
         if self.downsample is not None:
             residual = self.downsample(x)
-
+        # print(f'residual shape after downsample {residual.shape}')
         out += residual
         out = self.relu(out)
 
@@ -133,7 +144,7 @@ class BasicBlock7x7(nn.Module):
 
 
 class Network(nn.Module):
-    def __init__(self, input_channel=2862, layers=[5, 5, 5, 1], num_classes=3):
+    def __init__(self, input_channel=2862, layers=[5, 5, 5, 5], stride=[1,1,1,2], num_classes=3, p=0.3):
         self.inplanes3 = 64
         self.inplanes5 = 64
         self.inplanes7 = 64
@@ -147,31 +158,43 @@ class Network(nn.Module):
         self.maxpool = nn.AdaptiveAvgPool1d(256)
         # self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
 
-        self.layer3x3_1 = self._make_layer3(BasicBlock3x3, 64, layers[0], stride=1)
-        self.layer3x3_2 = self._make_layer3(BasicBlock3x3, 128, layers[1], stride=1)
-        self.layer3x3_3 = self._make_layer3(BasicBlock3x3, 256, layers[2], stride=1)
-        # self.layer3x3_4 = self._make_layer3(BasicBlock3x3, 512, layers[3], stride=2)
+        self.layer3x3_1 = self._make_layer3(BasicBlock3x3, 64, layers[0], stride=stride[0])
+        self.layer3x3_2 = self._make_layer3(BasicBlock3x3, 128, layers[1], stride=stride[1])
+        self.layer3x3_3 = self._make_layer3(BasicBlock3x3, 256, layers[2], stride=stride[2])
+        self.layer3x3_4 = self._make_layer3(BasicBlock3x3, 512, layers[3], stride=stride[3])
 
         # maxplooing kernel size: 16, 11, 6
         self.maxpool3 = nn.AvgPool1d(kernel_size=3, stride=1, padding=1)
         # self.maxpool3 = nn.AdaptiveAvgPool1d(256)
 
-        self.layer5x5_1 = self._make_layer5(BasicBlock5x5, 64, layers[0], stride=1)
-        self.layer5x5_2 = self._make_layer5(BasicBlock5x5, 128, layers[1], stride=1)
-        self.layer5x5_3 = self._make_layer5(BasicBlock5x5, 256, layers[2], stride=1)
-        # self.layer5x5_4 = self._make_layer5(BasicBlock5x5, 512, layers[3], stride=2)
+        self.layer5x5_1 = self._make_layer5(BasicBlock5x5, 64, layers[0], stride=stride[0])
+        self.layer5x5_2 = self._make_layer5(BasicBlock5x5, 128, layers[1], stride=stride[1])
+        self.layer5x5_3 = self._make_layer5(BasicBlock5x5, 256, layers[2], stride=stride[2])
+        self.layer5x5_4 = self._make_layer5(BasicBlock5x5, 512, layers[3], stride=stride[3])
         self.maxpool5 = nn.AvgPool1d(kernel_size=5, stride=1, padding=2)
         # self.maxpool5 = nn.AdaptiveAvgPool1d(256)
 
-        self.layer7x7_1 = self._make_layer7(BasicBlock7x7, 64, layers[0], stride=1)
-        self.layer7x7_2 = self._make_layer7(BasicBlock7x7, 128, layers[1], stride=1)
-        self.layer7x7_3 = self._make_layer7(BasicBlock7x7, 256, layers[2], stride=1)
-        # self.layer7x7_4 = self._make_layer7(BasicBlock7x7, 512, layers[3], stride=2)
+        self.layer7x7_1 = self._make_layer7(BasicBlock7x7, 64, layers[0], stride=stride[0])
+        self.layer7x7_2 = self._make_layer7(BasicBlock7x7, 128, layers[1], stride=stride[1])
+        self.layer7x7_3 = self._make_layer7(BasicBlock7x7, 256, layers[2], stride=stride[2])
+        self.layer7x7_4 = self._make_layer7(BasicBlock7x7, 512, layers[3], stride=stride[3])
         self.maxpool7 = nn.AvgPool1d(kernel_size=7, stride=1, padding=3)
         # self.maxpool7 = nn.AdaptiveAvgPool1d(256)
 
+
         # self.drop = nn.Dropout(p=0.2)
-        self.fc = nn.Linear(256, num_classes)
+        self.linear1 = nn.Linear(512, 2*512)
+        # self.bn1     = nn.BatchNorm1d(2*512)
+        self.relu1   = nn.ReLU(inplace=True)
+        self.drop1   = nn.Dropout(p)
+
+        self.linear2 = nn.Linear(512*2, 512)
+        # self.bn2     = nn.BatchNorm1d(512)
+        self.relu2   = nn.ReLU(inplace=True)
+        self.drop2   = nn.Dropout(p)  
+
+        self.fc      = nn.Linear(512, num_classes)   
+        
 
         for m in self.modules():
             if isinstance(m, nn.Conv1d):
@@ -242,22 +265,44 @@ class Network(nn.Module):
         x = self.layer3x3_1(x0)
         x = self.layer3x3_2(x)
         x = self.layer3x3_3(x)
+        x = self.layer3x3_4(x)
         # x = self.maxpool3(x)
 
         y = self.layer5x5_1(x0)
         y = self.layer5x5_2(y)
         y = self.layer5x5_3(y)
+        y = self.layer5x5_4(y)
         # y = self.maxpool5(y)
 
         z = self.layer7x7_1(x0)
         z = self.layer7x7_2(z)
         z = self.layer7x7_3(z)
+        z = self.layer7x7_4(z)
         # z = self.maxpool7(z)
 
         # print(f'output size of x is {x.shape}, y is {y.shape}, and z is {z.shape}')
         out = x + y + z
+
+        # Dynamically determine the target size
+        target_size = max(lens).item()
+
+        # Use F.interpolate for dynamic upsampling
+        out = F.interpolate(out, size=target_size, mode='linear', align_corners=True)
         
         out = out.permute(0, 2, 1)
+
+        # print(f'output size after permute {out.shape}')
+
+        out = self.linear1(out)
+        # out = self.bn1(out)
+        out = self.relu1(out)
+        out = self.drop1(out)
+
+        out = self.linear2(out)
+        # out = self.bn2(out)
+        out = self.relu2(out)
+        out = self.drop2(out)
+ 
         out1 = self.fc(out)
         # print(f'out1 shape is {out1.shape}')
 
