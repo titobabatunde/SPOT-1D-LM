@@ -1,1 +1,0 @@
-inputs/5LOS_A.fasta
