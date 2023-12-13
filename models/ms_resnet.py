@@ -159,6 +159,7 @@ class Network(nn.Module):
         self.layer5x5_3 = self._make_layer5(BasicBlock5x5, 256, layers[2], stride=1)
         # self.layer5x5_4 = self._make_layer5(BasicBlock5x5, 512, layers[3], stride=2)
         self.maxpool5 = nn.AvgPool1d(kernel_size=11, stride=1, padding=0)
+        # nn.AdaptiveAvgPool1d()
 
         self.layer7x7_1 = self._make_layer7(BasicBlock7x7, 64, layers[0], stride=1)
         self.layer7x7_2 = self._make_layer7(BasicBlock7x7, 128, layers[1], stride=1)

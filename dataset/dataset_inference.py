@@ -54,8 +54,13 @@ class Proteins_Dataset(Dataset):
         # extracts the protein name from the protein path
         protein = prot_path.split('/')[-1].split('.')[0]
 
-        # reads the protein sequence from prot_path
-        seq = read_fasta_file(prot_path)
+        # load label data for the protein
+        labels = np.load(os.path.join("spot_1d_lm/labels", protein + ".npy"), allow_pickle=True)
+
+        # # reads the protein sequence from prot_path
+        # seq = read_fasta_file(prot_path)
+        seq = ''.join(labels[:, 3])
+
         # applies one-hot encdoing to the sequence
         one_hot_enc = one_hot(seq)
         # loads EEM and ProtTrans embeddings from the numpy files
